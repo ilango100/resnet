@@ -24,3 +24,6 @@ def plain_prebn(inputs: tf.Tensor, filters: int, reduce=False, momentum=0.9) -> 
     x = tf.keras.layers.Conv2D(filters, 3, 1, "same", activation="relu")(x)
 
     return x
+
+
+__all__ = ["plain", "plain_prebn"]
