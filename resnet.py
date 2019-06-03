@@ -40,10 +40,10 @@ def plot_history(history):
 
     # Print values
     print("Min val_loss:", min(history["val_loss"]))
-    print("Max val_acc:", min(history["val_acc"]))
+    print("Max val_acc:", max(history["val_acc"]))
 
 
-def train_and_evaluate(block, bsize=1024, epochs=50):
+def train_and_evaluate(block, bsize=1024, epochs=100):
     # Download and prepare dataset
     cifar = tfds.builder("cifar10")
     cifar.download_and_prepare()
@@ -63,8 +63,10 @@ def train_and_evaluate(block, bsize=1024, epochs=50):
     ])
 
     # Train the model
-    hist = model.fit(train, steps_per_epoch=trsteps, epochs=epochs,
-                     validation_data=val, validation_steps=valsteps)
+    hist = model.fit(train, steps_per_epoch=trsteps, epochs=epochs, callbacks=[
+        tf.keras.callbacks.EarlyStopping("val_acc", patience=20)
+    ],
+        validation_data=val, validation_steps=valsteps)
 
     # Summarize
     plot_history(hist.history)
