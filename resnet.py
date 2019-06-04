@@ -43,7 +43,7 @@ def plot_history(history):
     print("Max val_acc:", max(history["val_acc"]))
 
 
-def train_and_evaluate(block, bsize=1024, epochs=100):
+def train_and_evaluate(model, bsize=1024, epochs=100):
     # Download and prepare dataset
     cifar = tfds.builder("cifar10")
     cifar.download_and_prepare()
@@ -57,7 +57,6 @@ def train_and_evaluate(block, bsize=1024, epochs=100):
     ).batch(bsize).prefetch(tf.data.experimental.AUTOTUNE)
 
     # Compile model with default params
-    model = resnet(block)
     model.compile("adam", "sparse_categorical_crossentropy", metrics=[
         tf.keras.metrics.SparseCategoricalAccuracy("acc")
     ])
