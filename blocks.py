@@ -8,7 +8,7 @@ def plain(inputs: tf.Tensor, filters: int, conv_layers=2, cs=True, reduce=False)
     x = BatchNormalization(center=cs, scale=cs)(x)
     x = Activation("relu")(x)
 
-    for _ in range(conv_layers-1):
+    for _ in range(1, conv_layers):
         x = Conv2D(filters, 3, 1, "same")(x)
         x = BatchNormalization(center=cs, scale=cs)(x)
         x = Activation("relu")(x)
@@ -21,7 +21,7 @@ def plain_prebn(inputs: tf.Tensor, filters: int, conv_layers=2, cs=True, reduce=
     x = BatchNormalization(center=cs, scale=cs)(inputs)
     x = Conv2D(filters, 3, stride, "same", activation="relu")(x)
 
-    for _ in range(conv_layers-1):
+    for _ in range(1, conv_layers):
         x = BatchNormalization(center=cs, scale=cs)(x)
         x = Conv2D(filters, 3, 1, "same", activation="relu")(x)
 
@@ -35,7 +35,7 @@ def resblock(inputs: tf.Tensor, filters: int, conv_layers=2, cs=True, reduce=Fal
     x = BatchNormalization(center=cs, scale=cs)(x)
     x = Activation("relu")(x)
 
-    for _ in range(conv_layers-2):
+    for _ in range(1, conv_layers-1):
         x = Conv2D(filters, 3, 1, "same")(x)
         x = BatchNormalization(center=cs, scale=cs)(x)
         x = Activation("relu")(x)
@@ -58,7 +58,7 @@ def resblock_prebn(inputs: tf.Tensor, filters: int, conv_layers=2, cs=True, redu
     x = BatchNormalization(center=cs, scale=cs)(inputs)
     x = Conv2D(filters, 3, stride, "same", activation="relu")(x)
 
-    for _ in range(conv_layers-2):
+    for _ in range(1, conv_layers-1):
         x = BatchNormalization(center=cs, scale=cs)(x)
         x = Conv2D(filters, 3, 1, "same", activation="relu")(x)
 
