@@ -3,19 +3,19 @@ import tensorflow_datasets as tfds
 import matplotlib.pyplot as plt
 
 
-def resnet(block, input_shape=(32, 32, 3), filters=[64, 128, 256], blocks=2, classes=10, momentum=0.9) -> tf.keras.Model:
+def resnet(block, input_shape=(32, 32, 3), filters=[64, 128, 256], blocks=2, classes=10) -> tf.keras.Model:
     inp = tf.keras.Input(shape=input_shape)
 
     x = tf.keras.layers.Conv2D(
         filters[0], 5, 2, "same", activation="relu")(inp)
 
     for _ in range(blocks):
-        x = block(x, filters[0], momentum=momentum)
+        x = block(x, filters[0])
 
     for filt in filters[1:]:
-        x = block(x, filt, reduce=True, momentum=momentum)
+        x = block(x, filt, reduce=True)
         for _ in range(blocks):
-            x = block(x, filt, momentum=momentum)
+            x = block(x, filt)
 
     x = tf.keras.layers.GlobalAvgPool2D()(x)
     x = tf.keras.layers.Dense(classes, activation="softmax")(x)
