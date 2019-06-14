@@ -1,3 +1,4 @@
+import math
 import tensorflow as tf
 import tensorflow_datasets as tfds
 import matplotlib.pyplot as plt
@@ -35,8 +36,10 @@ def train_and_evaluate(model, bsize=1024, epochs=500):
     cifar = tfds.builder("cifar10")
     cifar.download_and_prepare()
 
-    trsteps = cifar.info.splits[tfds.Split.TRAIN].num_examples//bsize
-    valsteps = cifar.info.splits[tfds.Split.TEST].num_examples//bsize
+    trsteps = int(
+        math.ceil(cifar.info.splits[tfds.Split.TRAIN].num_examples/bsize))
+    valsteps = int(
+        math.ceil(cifar.info.splits[tfds.Split.TEST].num_examples/bsize))
 
     train = cifar.as_dataset(split=tfds.Split.TRAIN, as_supervised=True).repeat(
     ).batch(bsize).prefetch(tf.data.experimental.AUTOTUNE)
