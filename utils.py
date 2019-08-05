@@ -31,21 +31,7 @@ def plot_metric(histories: dict, metric: str):
     plt.title(metric.capitalize())
 
 
-def train_and_evaluate(model, bsize=1024, epochs=500):
-    # Download and prepare dataset
-    cifar = tfds.builder("cifar10")
-    cifar.download_and_prepare()
-
-    trsteps = int(
-        math.ceil(cifar.info.splits[tfds.Split.TRAIN].num_examples/bsize))
-    valsteps = int(
-        math.ceil(cifar.info.splits[tfds.Split.TEST].num_examples/bsize))
-
-    train = cifar.as_dataset(split=tfds.Split.TRAIN, as_supervised=True).repeat(
-    ).batch(bsize).prefetch(tf.data.experimental.AUTOTUNE)
-    val = cifar.as_dataset(split=tfds.Split.TEST, as_supervised=True).repeat(
-    ).batch(bsize).prefetch(tf.data.experimental.AUTOTUNE)
-
+def train_and_evaluate(model, train, val, test, trsteps, valsteps, testeps, epochs=500):
     # Compile model with default params
     model.compile("adam", "sparse_categorical_crossentropy", metrics=[
         tf.keras.metrics.SparseCategoricalAccuracy("acc")
@@ -54,12 +40,14 @@ def train_and_evaluate(model, bsize=1024, epochs=500):
     # Train the model
     hist = model.fit(train, steps_per_epoch=trsteps, epochs=epochs, callbacks=[
         tf.keras.callbacks.EarlyStopping("val_acc", patience=50)
-    ],
-        validation_data=val, validation_steps=valsteps)
+    ], validation_data=val, validation_steps=valsteps)
 
     # Summarize
     plot_history(hist.history)
-    return hist.history
+
+    _, acc = model.evaluate(test, steps=testeps)
+
+    return acc
 
 
 __all__ = ["plot_history", "plot_metric", "train_and_evaluate"]
