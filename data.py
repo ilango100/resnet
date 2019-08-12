@@ -13,7 +13,7 @@ def split_trainval(dataset, l, frac=0.8):
 
 def get_cifar10(bsize=1024):
     # Download and prepare dataset
-    cifar = tfds.builder("cifar10", data_dir="D:\\MachineLearning\\tfds")
+    cifar = tfds.builder("cifar10")
     cifar.download_and_prepare()
 
     # Get epoch steps

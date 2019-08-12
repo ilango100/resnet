@@ -45,9 +45,7 @@ def train_and_evaluate(model, train, val, test, trsteps, valsteps, testeps, epoc
     # Summarize
     plot_history(hist.history)
 
-    _, acc = model.evaluate(test, steps=testeps)
-
-    return acc
+    return model.evaluate(test, steps=testeps), hist.history
 
 
 __all__ = ["plot_history", "plot_metric", "train_and_evaluate"]
