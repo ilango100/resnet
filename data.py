@@ -21,19 +21,22 @@ def cifar10(datapath, bsize):
 
     # Get epoch steps
     totsteps = cifar.info.splits[tfds.Split.TRAIN].num_examples
-    train = cifar.as_dataset(split=tfds.Split.TRAIN, as_supervised=True)
+    trsteps = math.ceil(totsteps * 0.8)
+    valsteps = totsteps - trsteps
     testeps = cifar.info.splits[tfds.Split.TEST].num_examples
 
-    # Split train val
-    train, val, trsteps = split_trainval(train, totsteps)
-    valsteps = totsteps-trsteps
+    # Get data
+    train, val = tfds.Split.TRAIN.subsplit(weighted=[4, 1])
+    train = cifar.as_dataset(split=train, as_supervised=True)
+    val = cifar.as_dataset(split=val, as_supervised=True)
+    test = cifar.as_dataset(split=tfds.Split.TEST, as_supervised=True)
 
-    # Process datasets
+    # Apply operations
     train = train.repeat().batch(bsize).prefetch(tf.data.experimental.AUTOTUNE)
     val = val.repeat().batch(bsize).prefetch(tf.data.experimental.AUTOTUNE)
-    test = cifar.as_dataset(split=tfds.Split.TEST,
-                            as_supervised=True).repeat().batch(bsize).prefetch(tf.data.experimental.AUTOTUNE)
-    # Correct epoch steps
+    test = test.repeat().batch(bsize).prefetch(tf.data.experimental.AUTOTUNE)
+
+    # Epoch steps
     trsteps = math.ceil(trsteps/bsize)
     valsteps = math.ceil(valsteps/bsize)
     testeps = math.ceil(testeps/bsize)
