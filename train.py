@@ -1,10 +1,9 @@
 import argparse
 import blocks
-from data import get_cifar10
+import data
 from network import stack
 from tensorflow import keras
-from utils import *
-from os.path import join
+from os.path import join, expanduser
 
 assert __name__ == "__main__", "Not intended to be imported. Run as script."
 
@@ -15,6 +14,10 @@ argp.add_argument("-f", "--filters", nargs="+",
 argp.add_argument("-n", "--nblocks", type=int, default=2)
 argp.add_argument("-c", "--conv", type=int, default=2)
 argp.add_argument("-e", "--epochs", type=int, default=500)
+argp.add_argument("-d", "--dataset", default="cifar10")
+argp.add_argument("-p", "--path",
+                  default=join(expanduser("~"), "tensorflow_datasets"))
+argp.add_argument("-b", "--batch", type=int, default=1024)
 
 args = argp.parse_args()
 
@@ -25,10 +28,14 @@ assert args.block in blocks.__all__, "Block {} not defined. Please specify one o
 block = getattr(blocks, args.block)
 
 # Get data
-train, val, test, trsteps, valsteps, testeps = get_cifar10()
+assert args.dataset in data.__all__, "Dataset {} not defined. Please specify one of following: {}".format(
+    args.dataset, data.__all__)
+train, val, test, trsteps, valsteps, testeps, classes = getattr(
+    data, args.dataset)(args.path, args.batch)
+print("Dataset {} loaded from {}".format(args.dataset, args.path))
 
 # Build model
-model = stack(block, args.filters, args.nblocks, args.conv)
+model = stack(block, args.filters, args.nblocks, args.conv, classes)
 
 # Compile model
 model.compile("adam", "sparse_categorical_crossentropy", metrics=[

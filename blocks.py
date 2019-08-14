@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import BatchNormalization, Conv2D, Activation, add
 
 
-def plain(inputs: tf.Tensor, filters: int, conv_layers=2, cs=True, reduce=False) -> tf.Tensor:
+def plain(inputs: tf.Tensor, filters: int, conv_layers: int, reduce=False, cs=True) -> tf.Tensor:
     stride = 2 if reduce else 1
     x = Conv2D(filters, 3, stride, "same")(inputs)
     x = BatchNormalization(center=cs, scale=cs)(x)
@@ -16,7 +16,7 @@ def plain(inputs: tf.Tensor, filters: int, conv_layers=2, cs=True, reduce=False)
     return x
 
 
-def plain_prebn(inputs: tf.Tensor, filters: int, conv_layers=2, cs=True, reduce=False) -> tf.Tensor:
+def plain_prebn(inputs: tf.Tensor, filters: int, conv_layers: int, reduce=False, cs=True) -> tf.Tensor:
     stride = 2 if reduce else 1
     x = BatchNormalization(center=cs, scale=cs)(inputs)
     x = Conv2D(filters, 3, stride, "same", activation="relu")(x)
@@ -28,7 +28,7 @@ def plain_prebn(inputs: tf.Tensor, filters: int, conv_layers=2, cs=True, reduce=
     return x
 
 
-def resblock(inputs: tf.Tensor, filters: int, conv_layers=2, cs=True, reduce=False) -> tf.Tensor:
+def resblock(inputs: tf.Tensor, filters: int, conv_layers: int, reduce=False, cs=True) -> tf.Tensor:
     stride = 2 if reduce else 1
 
     x = Conv2D(filters, 3, stride, "same")(inputs)
@@ -44,7 +44,7 @@ def resblock(inputs: tf.Tensor, filters: int, conv_layers=2, cs=True, reduce=Fal
     x = BatchNormalization(center=cs, scale=cs)(x)
 
     if reduce:
-        inputs = Conv2D(filters, 3, stride, "same")(inputs)
+        inputs = Conv2D(filters, 1, stride, "same")(inputs)
 
     x = add([inputs, x])
 
@@ -53,7 +53,7 @@ def resblock(inputs: tf.Tensor, filters: int, conv_layers=2, cs=True, reduce=Fal
     return x
 
 
-def resblock_prebn(inputs: tf.Tensor, filters: int, conv_layers=2, cs=True, reduce=False) -> tf.Tensor:
+def resblock_prebn(inputs: tf.Tensor, filters: int, conv_layers: int, reduce=False, cs=True) -> tf.Tensor:
     stride = 2 if reduce else 1
     x = BatchNormalization(center=cs, scale=cs)(inputs)
     x = Conv2D(filters, 3, stride, "same", activation="relu")(x)
@@ -66,7 +66,7 @@ def resblock_prebn(inputs: tf.Tensor, filters: int, conv_layers=2, cs=True, redu
     x = Conv2D(filters, 3, 1, "same")(x)
 
     if reduce:
-        inputs = Conv2D(filters, 3, stride, "same")(inputs)
+        inputs = Conv2D(filters, 1, stride, "same")(inputs)
 
     x = add([inputs, x])
 

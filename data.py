@@ -14,9 +14,9 @@ def split_trainval(dataset, l, frac=0.8):
     return train, val, trsteps
 
 
-def get_cifar10(bsize=1024):
+def cifar10(datapath, bsize):
     # Download and prepare dataset
-    cifar = tfds.builder("cifar10")
+    cifar = tfds.builder("cifar10", data_dir=datapath)
     cifar.download_and_prepare()
 
     # Get epoch steps
@@ -38,10 +38,10 @@ def get_cifar10(bsize=1024):
     valsteps = math.ceil(valsteps/bsize)
     testeps = math.ceil(testeps/bsize)
 
-    return train, val, test, trsteps, valsteps, testeps
+    return train, val, test, trsteps, valsteps, testeps, 10
 
 
-def get_tiny_imagenet(datapath, bsize=1024):
+def tiny_imagenet(datapath, bsize):
     trainpath = join(datapath, "train")
     assert tf.io.gfile.isdir(trainpath), "Train directory does not exist"
     valpath = join(datapath, "val")
@@ -72,14 +72,13 @@ def get_tiny_imagenet(datapath, bsize=1024):
 
     def f(x, y):
         img = tf.image.decode_jpeg(tf.io.read_file(x), 3)
-        img = tf.image.resize(img, (64, 64))
         return img, y
 
     # Process datasets
     train = train.map(f).repeat().batch(
         bsize).prefetch(tf.data.experimental.AUTOTUNE)
-    val = val.map(f).repeat().batch(bsize).prefetch(
-        tf.data.experimental.AUTOTUNE)
+    val = val.map(f).repeat().batch(
+        bsize).prefetch(tf.data.experimental.AUTOTUNE)
     test = test.map(f).repeat().batch(
         bsize).prefetch(tf.data.experimental.AUTOTUNE)
 
@@ -88,7 +87,7 @@ def get_tiny_imagenet(datapath, bsize=1024):
     valsteps = math.ceil(valsteps/bsize)
     testeps = math.ceil(testeps/bsize)
 
-    return train, val, test, trsteps, valsteps, testeps
+    return train, val, test, trsteps, valsteps, testeps, len(classes)
 
 
-__all__ = ["get_cifar10", "split_trainval", "get_tiny_imagenet"]
+__all__ = ["cifar10", "tiny_imagenet"]
