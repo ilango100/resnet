@@ -1,4 +1,7 @@
 import math
+from os import sep
+from os.path import join
+import pandas as pd
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
@@ -38,4 +41,54 @@ def get_cifar10(bsize=1024):
     return train, val, test, trsteps, valsteps, testeps
 
 
-__all__ = ["get_cifar10", "split_trainval"]
+def get_tiny_imagenet(datapath, bsize=1024):
+    trainpath = join(datapath, "train")
+    assert tf.io.gfile.isdir(trainpath), "Train directory does not exist"
+    valpath = join(datapath, "val")
+    assert tf.io.gfile.isdir(valpath), "Val directory does not exist"
+    classes = tf.io.gfile.listdir(trainpath)
+
+    # Train data
+    images = tf.io.gfile.glob(join(trainpath, "*", "images", "*.JPEG"))
+    labels = map(lambda x: x.split(sep)[-3], images)
+    labels = list(map(classes.index, labels))
+    train = tf.data.Dataset.from_tensor_slices(
+        (images, labels)).shuffle(len(images))
+    trsteps = len(images)
+
+    # Split train val
+    train, val, trsteps = split_trainval(train, trsteps)
+    valsteps = len(images)-trsteps
+
+    # Load test data
+    df = pd.read_csv(join(valpath, "val_annotations.txt"),
+                     sep="\t",
+                     names=["images", "label", "l", "t", "r", "b"])
+    testimages = df.images.map(lambda x: join(valpath, "images", x)).tolist()
+    testlabels = df.label.map(classes.index).tolist()
+    test = tf.data.Dataset.from_tensor_slices(
+        (testimages, testlabels)).shuffle(len(testimages))
+    testeps = len(testimages)
+
+    def f(x, y):
+        img = tf.image.decode_jpeg(tf.io.read_file(x), 3)
+        img = tf.image.resize(img, (64, 64))
+        return img, y
+
+    # Process datasets
+    train = train.map(f).repeat().batch(
+        bsize).prefetch(tf.data.experimental.AUTOTUNE)
+    val = val.map(f).repeat().batch(bsize).prefetch(
+        tf.data.experimental.AUTOTUNE)
+    test = test.map(f).repeat().batch(
+        bsize).prefetch(tf.data.experimental.AUTOTUNE)
+
+    # Correct epoch steps
+    trsteps = math.ceil(trsteps/bsize)
+    valsteps = math.ceil(valsteps/bsize)
+    testeps = math.ceil(testeps/bsize)
+
+    return train, val, test, trsteps, valsteps, testeps
+
+
+__all__ = ["get_cifar10", "split_trainval", "get_tiny_imagenet"]
