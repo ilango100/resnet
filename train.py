@@ -44,8 +44,8 @@ model.compile("adam", "sparse_categorical_crossentropy", metrics=[
 # Train the model
 hist = model.fit(train, steps_per_epoch=trsteps, epochs=args.epochs, callbacks=[
     keras.callbacks.EarlyStopping("val_acc", patience=25),
-    keras.callbacks.TensorBoard(join("logs", "{}{}x{}x{}".format(args.block, args.filters,
-                                                                 args.nblocks, args.conv)))
+    keras.callbacks.TensorBoard(join("logs", "{}{}x{}".format(args.block,
+                                                              args.filters, args.nblocks)))
 ], validation_data=val, validation_steps=valsteps)
 
 # Evaluate the model
