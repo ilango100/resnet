@@ -2,40 +2,33 @@ from tensorflow import Tensor
 from tensorflow.keras.layers import BatchNormalization, Conv2D, Activation, add
 
 
-def plain(inputs: Tensor, filters: int, conv_layers: int, reduce=False, cs=True) -> Tensor:
+def plain(inputs: Tensor, filters: int, reduce=False, cs=True) -> Tensor:
     x = Conv2D(filters, 3, 2 if reduce else 1, "same")(inputs)
     x = BatchNormalization(center=cs, scale=cs)(x)
     x = Activation("relu")(x)
 
-    for _ in range(conv_layers-1):
-        x = Conv2D(filters, 3, 1, "same")(x)
-        x = BatchNormalization(center=cs, scale=cs)(x)
-        x = Activation("relu")(x)
+    x = Conv2D(filters, 3, 1, "same")(x)
+    x = BatchNormalization(center=cs, scale=cs)(x)
+    x = Activation("relu")(x)
 
     return x
 
 
-def plain_prebn(inputs: Tensor, filters: int, conv_layers: int, reduce=False, cs=True) -> Tensor:
+def plain_prebn(inputs: Tensor, filters: int, reduce=False, cs=True) -> Tensor:
     x = BatchNormalization(center=cs, scale=cs)(inputs)
     x = Conv2D(filters, 3, 2 if reduce else 1, "same", activation="relu")(x)
 
-    for _ in range(conv_layers-1):
-        x = BatchNormalization(center=cs, scale=cs)(x)
-        x = Conv2D(filters, 3, 1, "same", activation="relu")(x)
+    x = BatchNormalization(center=cs, scale=cs)(x)
+    x = Conv2D(filters, 3, 1, "same", activation="relu")(x)
 
     return x
 
 
-def resblock(inputs: Tensor, filters: int, conv_layers: int, reduce=False, cs=True) -> Tensor:
+def resblock(inputs: Tensor, filters: int, reduce=False, cs=True) -> Tensor:
 
     x = Conv2D(filters, 3, 2 if reduce else 1, "same")(inputs)
     x = BatchNormalization(center=cs, scale=cs)(x)
     x = Activation("relu")(x)
-
-    for _ in range(conv_layers-2):
-        x = Conv2D(filters, 3, 1, "same")(x)
-        x = BatchNormalization(center=cs, scale=cs)(x)
-        x = Activation("relu")(x)
 
     x = Conv2D(filters, 3, 1, "same")(x)
     x = BatchNormalization(center=cs, scale=cs)(x)
@@ -50,14 +43,10 @@ def resblock(inputs: Tensor, filters: int, conv_layers: int, reduce=False, cs=Tr
     return x
 
 
-def resblock_prebn(inputs: Tensor, filters: int, conv_layers: int, reduce=False, cs=True) -> Tensor:
+def resblock_prebn(inputs: Tensor, filters: int, reduce=False, cs=True) -> Tensor:
 
     x = BatchNormalization(center=cs, scale=cs)(inputs)
     x = Conv2D(filters, 3, 2 if reduce else 1, "same", activation="relu")(x)
-
-    for _ in range(conv_layers-2):
-        x = BatchNormalization(center=cs, scale=cs)(x)
-        x = Conv2D(filters, 3, 1, "same", activation="relu")(x)
 
     x = BatchNormalization(center=cs, scale=cs)(x)
     x = Conv2D(filters, 3, 1, "same")(x)

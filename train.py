@@ -12,7 +12,6 @@ argp.add_argument("block", type=str)
 argp.add_argument("-f", "--filters", nargs="+",
                   type=int, default=[32, 64, 128])
 argp.add_argument("-n", "--nblocks", type=int, default=2)
-argp.add_argument("-c", "--conv", type=int, default=2)
 argp.add_argument("-e", "--epochs", type=int, default=500)
 argp.add_argument("-d", "--dataset", default="cifar10")
 argp.add_argument("-p", "--path",
@@ -35,7 +34,7 @@ train, val, test, trsteps, valsteps, testeps, classes = getattr(
 print("Dataset {} loaded from {}".format(args.dataset, args.path))
 
 # Build model
-model = stack(block, args.filters, args.nblocks, args.conv, classes)
+model = stack(block, args.filters, args.nblocks, classes)
 
 # Compile model
 model.compile("adam", "sparse_categorical_crossentropy", metrics=[
