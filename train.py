@@ -33,8 +33,14 @@ train, val, test, trsteps, valsteps, testeps, classes = getattr(
     data, args.dataset)(args.path, args.batch)
 print("Dataset {} loaded from {}".format(args.dataset, args.path))
 
+run_name = "{}{}x{}".format(args.block, args.filters, args.nblocks)
+print("Run Name:", run_name)
+
 # Build model
 model = stack(block, args.filters, args.nblocks, classes)
+
+# Print model summary
+model.summary()
 
 # Compile model
 model.compile("adam", "sparse_categorical_crossentropy", metrics=[
@@ -44,11 +50,13 @@ model.compile("adam", "sparse_categorical_crossentropy", metrics=[
 # Train the model
 hist = model.fit(train, steps_per_epoch=trsteps, epochs=args.epochs, callbacks=[
     keras.callbacks.EarlyStopping("val_acc", patience=25),
-    keras.callbacks.TensorBoard(join("logs", "{}{}x{}".format(args.block,
-                                                              args.filters, args.nblocks)))
+    keras.callbacks.TensorBoard(join("logs", args.dataset, run_name))
 ], validation_data=val, validation_steps=valsteps)
 
 # Evaluate the model
 loss, acc = model.evaluate(test, steps=testeps)
+
+# Save the model
+model.save(join("models", args.dataset, run_name))
 
 print("Test loss, accuracy:", loss, acc)
