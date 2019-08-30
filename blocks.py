@@ -61,4 +61,40 @@ def resblock_prebn(inputs: Tensor, filters: int, reduce=False, cs=True) -> Tenso
     return x
 
 
-__all__ = ["plain",  "plain_prebn", "resblock", "resblock_prebn"]
+def resblockv2(inputs: Tensor, filters: int, reduce=False, cs=True) -> Tensor:
+
+    x = BatchNormalization(center=cs, scale=cs)(inputs)
+    x = Activation("relu")(x)
+    x = Conv2D(filters, 3, 2 if reduce else 1, "same")(x)
+
+    x = BatchNormalization(center=cs, scale=cs)(x)
+    x = Activation("relu")(x)
+    x = Conv2D(filters, 3, 1, "same")(x)
+
+    if reduce:
+        inputs = Conv2D(filters, 1, 2, "same")(inputs)
+
+    x = add([inputs, x])
+
+    return x
+
+
+def resblockv2_prebn(inputs: Tensor, filters: int, reduce=False, cs=True) -> Tensor:
+
+    x = Activation("relu")(inputs)
+    x = BatchNormalization(center=cs, scale=cs)(x)
+    x = Conv2D(filters, 3, 2 if reduce else 1, "same", activation="relu")(x)
+
+    x = BatchNormalization(center=cs, scale=cs)(x)
+    x = Conv2D(filters, 3, 1, "same")(x)
+
+    if reduce:
+        inputs = Conv2D(filters, 1, 2, "same")(inputs)
+
+    x = add([inputs, x])
+
+    return x
+
+
+__all__ = ["plain",  "plain_prebn", "resblock",
+           "resblock_prebn", "resblockv2", "resblockv2_prebn"]

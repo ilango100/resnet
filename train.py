@@ -49,12 +49,17 @@ model.compile("adam", "sparse_categorical_crossentropy", metrics=[
 
 # Train the model
 hist = model.fit(train, steps_per_epoch=trsteps, epochs=args.epochs, callbacks=[
-    keras.callbacks.EarlyStopping("val_acc", patience=25),
+    # keras.callbacks.EarlyStopping("val_acc", patience=25),
     keras.callbacks.TensorBoard(join("logs", args.dataset, run_name))
 ], validation_data=val, validation_steps=valsteps)
 
 # Evaluate the model
 loss, acc = model.evaluate(test, steps=testeps)
+
+# Write evaluation results
+with open(join("logs", "results.csv"), "a") as f:
+    f.write("{},{},{},{}\n".format(args.dataset,
+                                   run_name.replace(",", ""), loss, acc))
 
 # Save the model
 model.save(join("models", args.dataset, run_name))
