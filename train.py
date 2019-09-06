@@ -47,7 +47,7 @@ print("Dataset {} loaded from {}".format(args.dataset, args.path))
 
 # Run name
 run_name = "{}{}x{}(lr{}r{})".format(args.block, args.filters,
-                                     args.nblocks, args.regularization, args.learning_rate)
+                                     args.nblocks, args.learning_rate, args.regularization)
 print("Run Name:", run_name)
 
 # Build model
@@ -57,7 +57,7 @@ model = stack(block, args.filters, args.nblocks, classes, args.regularization)
 model.summary()
 
 # Compile model
-model.compile("adam", "sparse_categorical_crossentropy", metrics=[
+model.compile(opt, "sparse_categorical_crossentropy", metrics=[
     keras.metrics.SparseCategoricalAccuracy("acc")
 ])
 
