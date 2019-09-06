@@ -1,36 +1,60 @@
-from tensorflow import Tensor
 from tensorflow.keras.layers import BatchNormalization, Conv2D, Activation, add
+from tensorflow.keras.regularizers import l2
 
 
-def plain(inputs: Tensor, filters: int, reduce=False, cs=True) -> Tensor:
-    x = Conv2D(filters, 3, 2 if reduce else 1, "same")(inputs)
+def plain(inputs, filters, reduce=False, reg=None, cs=True):
+    if reg:
+        x = Conv2D(filters, 3, 2 if reduce else 1, "same",
+                   kernel_regularizer=l2(reg))(inputs)
+    else:
+        x = Conv2D(filters, 3, 2 if reduce else 1, "same")(inputs)
     x = BatchNormalization(center=cs, scale=cs)(x)
     x = Activation("relu")(x)
 
-    x = Conv2D(filters, 3, 1, "same")(x)
+    if reg:
+        x = Conv2D(filters, 3, 1, "same", kernel_regularizer=l2(reg))(x)
+    else:
+        x = Conv2D(filters, 3, 1, "same")(x)
     x = BatchNormalization(center=cs, scale=cs)(x)
     x = Activation("relu")(x)
 
     return x
 
 
-def plain_prebn(inputs: Tensor, filters: int, reduce=False, cs=True) -> Tensor:
+def plain_prebn(inputs, filters, reduce=False, reg=None, cs=True):
     x = BatchNormalization(center=cs, scale=cs)(inputs)
-    x = Conv2D(filters, 3, 2 if reduce else 1, "same", activation="relu")(x)
+    if reg:
+        x = Conv2D(filters, 3, 2 if reduce else 1, "same",
+                   activation="relu", kernel_regularizer=l2(reg))(x)
+    else:
+        x = Conv2D(filters, 3, 2 if reduce else 1,
+                   "same", activation="relu")(x)
 
     x = BatchNormalization(center=cs, scale=cs)(x)
-    x = Conv2D(filters, 3, 1, "same", activation="relu")(x)
+    if reg:
+        x = Conv2D(filters, 3, 1, "same", activation="relu",
+                   kernel_regularizer=l2(reg))(x)
+    else:
+        x = Conv2D(filters, 3, 1, "same", activation="relu")(x)
 
     return x
 
 
-def resblock(inputs: Tensor, filters: int, reduce=False, cs=True) -> Tensor:
+def resblock(inputs, filters, reduce=False, reg=None, cs=True):
 
-    x = Conv2D(filters, 3, 2 if reduce else 1, "same")(inputs)
+    if reg:
+        x = Conv2D(filters, 3, 2 if reduce else 1, "same",
+                   kernel_regularizer=l2(reg))(inputs)
+    else:
+        x = Conv2D(filters, 3, 2 if reduce else 1, "same")(inputs)
+
     x = BatchNormalization(center=cs, scale=cs)(x)
     x = Activation("relu")(x)
 
-    x = Conv2D(filters, 3, 1, "same")(x)
+    if reg:
+        x = Conv2D(filters, 3, 1, "same", kernel_regularizer=l2(reg))(x)
+    else:
+        x = Conv2D(filters, 3, 1, "same")(x)
     x = BatchNormalization(center=cs, scale=cs)(x)
 
     if reduce:
@@ -43,13 +67,21 @@ def resblock(inputs: Tensor, filters: int, reduce=False, cs=True) -> Tensor:
     return x
 
 
-def resblock_prebn(inputs: Tensor, filters: int, reduce=False, cs=True) -> Tensor:
+def resblock_prebn(inputs, filters, reduce=False, reg=None, cs=True):
 
     x = BatchNormalization(center=cs, scale=cs)(inputs)
-    x = Conv2D(filters, 3, 2 if reduce else 1, "same", activation="relu")(x)
+    if reg:
+        x = Conv2D(filters, 3, 2 if reduce else 1, "same",
+                   activation="relu", kernel_regularizer=l2(reg))(x)
+    else:
+        x = Conv2D(filters, 3, 2 if reduce else 1,
+                   "same", activation="relu")(x)
 
     x = BatchNormalization(center=cs, scale=cs)(x)
-    x = Conv2D(filters, 3, 1, "same")(x)
+    if reg:
+        x = Conv2D(filters, 3, 1, "same", kernel_regularizer=l2(reg))(x)
+    else:
+        x = Conv2D(filters, 3, 1, "same")(x)
 
     if reduce:
         inputs = Conv2D(filters, 1, 2, "same")(inputs)
@@ -61,15 +93,23 @@ def resblock_prebn(inputs: Tensor, filters: int, reduce=False, cs=True) -> Tenso
     return x
 
 
-def resblockv2(inputs: Tensor, filters: int, reduce=False, cs=True) -> Tensor:
+def resblockv2(inputs, filters, reduce=False, reg=None, cs=True):
 
     x = BatchNormalization(center=cs, scale=cs)(inputs)
     x = Activation("relu")(x)
-    x = Conv2D(filters, 3, 2 if reduce else 1, "same")(x)
+    if reg:
+        x = Conv2D(filters, 3, 2 if reduce else 1, "same",
+                   kernel_regularizer=l2(reg))(x)
+    else:
+        x = Conv2D(filters, 3, 2 if reduce else 1, "same")(x)
 
     x = BatchNormalization(center=cs, scale=cs)(x)
     x = Activation("relu")(x)
-    x = Conv2D(filters, 3, 1, "same")(x)
+
+    if reg:
+        x = Conv2D(filters, 3, 1, "same", kernel_regularizer=l2(reg))(x)
+    else:
+        x = Conv2D(filters, 3, 1, "same")(x)
 
     if reduce:
         inputs = Conv2D(filters, 1, 2, "same")(inputs)
@@ -79,14 +119,22 @@ def resblockv2(inputs: Tensor, filters: int, reduce=False, cs=True) -> Tensor:
     return x
 
 
-def resblockv2_prebn(inputs: Tensor, filters: int, reduce=False, cs=True) -> Tensor:
+def resblockv2_prebn(inputs, filters, reduce=False, reg=None, cs=True):
 
     x = Activation("relu")(inputs)
     x = BatchNormalization(center=cs, scale=cs)(x)
-    x = Conv2D(filters, 3, 2 if reduce else 1, "same", activation="relu")(x)
+    if reg:
+        x = Conv2D(filters, 3, 2 if reduce else 1, "same",
+                   activation="relu", kernel_regularizer=l2(reg))(x)
+    else:
+        x = Conv2D(filters, 3, 2 if reduce else 1,
+                   "same", activation="relu")(x)
 
     x = BatchNormalization(center=cs, scale=cs)(x)
-    x = Conv2D(filters, 3, 1, "same")(x)
+    if reg:
+        x = Conv2D(filters, 3, 1, "same", kernel_regularizer=l2(reg))(x)
+    else:
+        x = Conv2D(filters, 3, 1, "same")(x)
 
     if reduce:
         inputs = Conv2D(filters, 1, 2, "same")(inputs)

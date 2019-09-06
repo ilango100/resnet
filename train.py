@@ -19,6 +19,7 @@ argp.add_argument("-p", "--path",
 argp.add_argument("-b", "--batch", type=int, default=1024)
 argp.add_argument("-o", "--optimizer", type=str, default="adam")
 argp.add_argument("-lr", "--learning_rate", type=float, default=0.01)
+argp.add_argument("-r", "--regularization", type=float, default=0.001)
 
 args = argp.parse_args()
 
@@ -45,11 +46,12 @@ train, val, test, trsteps, valsteps, testeps, classes = getattr(
 print("Dataset {} loaded from {}".format(args.dataset, args.path))
 
 # Run name
-run_name = "{}{}x{}".format(args.block, args.filters, args.nblocks)
+run_name = "{}{}x{}(lr{}r{})".format(args.block, args.filters,
+                                     args.nblocks, args.regularization, args.learning_rate)
 print("Run Name:", run_name)
 
 # Build model
-model = stack(block, args.filters, args.nblocks, classes)
+model = stack(block, args.filters, args.nblocks, classes, args.regularization)
 
 # Print model summary
 model.summary()
