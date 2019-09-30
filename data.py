@@ -31,10 +31,17 @@ def cifar10(datapath, bsize):
     val = cifar.as_dataset(split=val, as_supervised=True)
     test = cifar.as_dataset(split=tfds.Split.TEST, as_supervised=True)
 
+    def augment(x, y):
+        x = tf.pad(x, [[4, 4], [4, 4], [0, 0]])
+        x = tf.image.random_crop(x, [32, 32, 3])
+        x = tf.image.random_flip_left_right(x)
+        return x, y
+
     # Apply operations
-    train = train.repeat().batch(bsize).prefetch(tf.data.experimental.AUTOTUNE)
-    val = val.repeat().batch(bsize).prefetch(tf.data.experimental.AUTOTUNE)
-    test = test.repeat().batch(bsize).prefetch(tf.data.experimental.AUTOTUNE)
+    train = train.map(augment).shuffle(trsteps, reshuffle_each_iteration=True).batch(
+        bsize).repeat().prefetch(tf.data.experimental.AUTOTUNE)
+    val = val.batch(bsize).repeat().prefetch(tf.data.experimental.AUTOTUNE)
+    test = test.batch(bsize).repeat().prefetch(tf.data.experimental.AUTOTUNE)
 
     # Epoch steps
     trsteps = math.ceil(trsteps/bsize)
