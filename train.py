@@ -1,7 +1,7 @@
 import argparse
 import blocks
 import data
-from network import stack
+from stack import *
 from tensorflow import keras
 from os.path import join, expanduser
 
@@ -17,9 +17,9 @@ argp.add_argument("-d", "--dataset", default="cifar10")
 argp.add_argument("-p", "--path",
                   default=join(expanduser("~"), "tensorflow_datasets"))
 argp.add_argument("-b", "--batch", type=int, default=1024)
-argp.add_argument("-o", "--optimizer", type=str, default="adam")
-argp.add_argument("-lr", "--learning_rate", type=float, default=0.01)
-argp.add_argument("-r", "--regularization", type=float, default=0.001)
+argp.add_argument("-o", "--optimizer", type=str, default="sgd")
+argp.add_argument("-lr", "--learning_rate", type=float, default=0.1)
+argp.add_argument("-r", "--regularization", type=float, default=0.0001)
 
 args = argp.parse_args()
 
@@ -51,7 +51,15 @@ run_name = "{}{}x{}(lr{}r{})".format(args.block, args.filters,
 print("Run Name:", run_name)
 
 # Build model
-model = stack(block, args.filters, args.nblocks, classes, args.regularization)
+# TODO: Make network.py to build different networks
+preact = "v2" in args.block
+inputs = keras.Input(shape=(None, None, 3))
+x = start_stack(inputs, args.filters[0],
+                preact=preact, reg=args.regularization)
+x = stack(x, block, args.filters, args.nblocks, reg=args.regularization)
+x = end_stack(x, classes, preact=preact)
+
+model = keras.Model(inputs, x)
 
 # Print model summary
 model.summary()
@@ -61,12 +69,31 @@ model.compile(opt, "sparse_categorical_crossentropy", metrics=[
     keras.metrics.SparseCategoricalAccuracy("acc")
 ])
 
+
+def lr_schedule(epoch, lr):
+    if epoch < 100:
+        return 0.1
+    elif epoch < 250:
+        return 0.01
+    elif epoch < 400:
+        return 0.001
+    elif epoch % 100 == 0:
+        return lr/10
+    else:
+        return lr
+
+
 # Train the model
-hist = model.fit(train, steps_per_epoch=trsteps, epochs=args.epochs, callbacks=[
-    # keras.callbacks.EarlyStopping("val_acc", patience=25),
-    # keras.callbacks.ReduceLROnPlateau(verbose=1, min_lr=0.0001),
-    keras.callbacks.TensorBoard(join("logs", args.dataset, run_name))
-], validation_data=val, validation_steps=valsteps)
+try:
+    hist = model.fit(train, steps_per_epoch=trsteps, epochs=args.epochs, callbacks=[
+        keras.callbacks.TerminateOnNaN(),
+        keras.callbacks.LearningRateScheduler(lr_schedule),
+        # keras.callbacks.ReduceLROnPlateau(patience=10, verbose=1, cooldown=2, min_lr=1e-7)
+        keras.callbacks.TensorBoard(join("logs", args.dataset, run_name),
+                                    profile_batch=0)  # To avoid the bug: https://github.com/tensorflow/tensorboard/issues/2084
+    ], validation_data=val, validation_steps=valsteps)
+except KeyboardInterrupt:
+    print("\n\nTraining stopped, Evaluating Model...")
 
 # Evaluate the model
 loss, acc = model.evaluate(test, steps=testeps)
