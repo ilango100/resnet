@@ -27,9 +27,7 @@ def cifar10(datapath, bsize):
 
     # Get data
     train, val = tfds.Split.TRAIN.subsplit(weighted=[4, 1])
-    train = cifar.as_dataset(split=train, as_supervised=True)
-    val = cifar.as_dataset(split=val, as_supervised=True)
-    test = cifar.as_dataset(split=tfds.Split.TEST, as_supervised=True)
+    train, val, test = [cifar.as_dataset(split=x, as_supervised=True) for x in [train, val, tfds.Split.TEST]]
 
     def augment(x, y):
         x = tf.pad(x, [[4, 4], [4, 4], [0, 0]])

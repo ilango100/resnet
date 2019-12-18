@@ -2,8 +2,9 @@ import argparse
 import blocks
 import data
 from stack import *
+from schedule import lr_schedule
 from tensorflow import keras
-from os.path import join, expanduser
+from os.path import join
 
 assert __name__ == "__main__", "Not intended to be imported. Run as script."
 
@@ -14,8 +15,7 @@ argp.add_argument("-f", "--filters", nargs="+",
 argp.add_argument("-n", "--nblocks", type=int, default=2)
 argp.add_argument("-e", "--epochs", type=int, default=500)
 argp.add_argument("-d", "--dataset", default="cifar10")
-argp.add_argument("-p", "--path",
-                  default=join(expanduser("~"), "tensorflow_datasets"))
+argp.add_argument("-p", "--path", default=None)
 argp.add_argument("-b", "--batch", type=int, default=1024)
 argp.add_argument("-o", "--optimizer", type=str, default="sgd")
 argp.add_argument("-lr", "--learning_rate", type=float, default=0.1)
@@ -68,19 +68,6 @@ model.summary()
 model.compile(opt, "sparse_categorical_crossentropy", metrics=[
     keras.metrics.SparseCategoricalAccuracy("acc")
 ])
-
-
-def lr_schedule(epoch, lr):
-    if epoch < 100:
-        return 0.1
-    elif epoch < 250:
-        return 0.01
-    elif epoch < 400:
-        return 0.001
-    elif epoch % 100 == 0:
-        return lr/10
-    else:
-        return lr
 
 
 # Train the model
