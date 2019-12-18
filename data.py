@@ -16,7 +16,7 @@ def split_trainval(dataset, l, frac=0.8):
 
 def cifar10(datapath, bsize):
     # Download and prepare dataset
-    cifar = tfds.builder("cifar10", data_dir=datapath)
+    cifar = tfds.builder("cifar10:3.*.*", data_dir=datapath)
     cifar.download_and_prepare()
 
     # Get epoch steps
@@ -26,7 +26,8 @@ def cifar10(datapath, bsize):
     testeps = cifar.info.splits[tfds.Split.TEST].num_examples
 
     # Get data
-    train, val = tfds.Split.TRAIN.subsplit(weighted=[4, 1])
+    # train, val = tfds.Split.TRAIN.subsplit(weighted=[4, 1])
+    train, val = "train[:80%]", "train[80%:]"
     train, val, test = [cifar.as_dataset(split=x, as_supervised=True) for x in [train, val, tfds.Split.TEST]]
 
     def augment(x, y):

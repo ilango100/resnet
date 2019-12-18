@@ -1,15 +1,14 @@
 import argparse
-import blocks
 import data
-from stack import *
+import network
 from schedule import lr_schedule
 from tensorflow import keras
 from os.path import join
 
-assert __name__ == "__main__", "Not intended to be imported. Run as script."
+assert __name__ == "__main__", "Not intended to be imported. Please run as script."
 
 argp = argparse.ArgumentParser()
-argp.add_argument("block", type=str)
+argp.add_argument("network", type=str)
 argp.add_argument("-f", "--filters", nargs="+",
                   type=int, default=[32, 64, 128])
 argp.add_argument("-n", "--nblocks", type=int, default=2)
@@ -24,44 +23,29 @@ argp.add_argument("-r", "--regularization", type=float, default=0.0001)
 args = argp.parse_args()
 
 
-# Get block definition
-assert args.block in blocks.__all__, "Block {} not defined. Please specify one of following: {}".format(
-    args.block, blocks.__all__)
-block = getattr(blocks, args.block)
+# Get network definition
+assert args.network in network.__all__, f"Network {args.network} not defined. Please specify one of: {network.__all__}"
+net = getattr(network, args.network)
 
 # Get optimizer
 optimizers = {
     "sgd": keras.optimizers.SGD,
     "adam": keras.optimizers.Adam
 }
-assert args.optimizer in optimizers, "Optimizer {} not defined. Please specify one of following: {}".format(
-    args.optimizer, list(optimizers.keys()))
+assert args.optimizer in optimizers, f"Optimizer {args.optimizer} not defined. Please specify one of: {list(optimizers.keys())}"
 opt = optimizers[args.optimizer](args.learning_rate)
 
 # Get data
-assert args.dataset in data.__all__, "Dataset {} not defined. Please specify one of following: {}".format(
-    args.dataset, data.__all__)
-train, val, test, trsteps, valsteps, testeps, classes = getattr(
-    data, args.dataset)(args.path, args.batch)
+assert args.dataset in data.__all__, f"Dataset {args.dataset} not defined. Please specify one of: {data.__all__}"
+train, val, test, trsteps, valsteps, testeps, classes = getattr(data, args.dataset)(args.path, args.batch)
 print("Dataset {} loaded from {}".format(args.dataset, args.path))
 
 # Run name
-run_name = "{}{}x{}(lr{}r{})".format(args.block, args.filters,
-                                     args.nblocks, args.learning_rate, args.regularization)
+run_name = f"{args.network}{args.filters}x{args.nblocks}"
 print("Run Name:", run_name)
 
 # Build model
-# TODO: Make network.py to build different networks
-preact = "v2" in args.block
-inputs = keras.Input(shape=(None, None, 3))
-x = start_stack(inputs, args.filters[0],
-                preact=preact, reg=args.regularization)
-x = stack(x, block, args.filters, args.nblocks, reg=args.regularization)
-x = end_stack(x, classes, preact=preact)
-
-model = keras.Model(inputs, x)
-
-# Print model summary
+model = net(args.filters, args.nblocks, classes, reg=args.regularization)()
 model.summary()
 
 # Compile model
