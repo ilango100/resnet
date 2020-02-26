@@ -14,7 +14,6 @@ argp.add_argument("-f", "--filters", nargs="+",
 argp.add_argument("-n", "--nblocks", type=int, default=2)
 argp.add_argument("-e", "--epochs", type=int, default=500)
 argp.add_argument("-d", "--dataset", default="cifar10")
-argp.add_argument("-p", "--path", default=None)
 argp.add_argument("-b", "--batch", type=int, default=1024)
 argp.add_argument("-o", "--optimizer", type=str, default="sgd")
 argp.add_argument("-lr", "--learning_rate", type=float, default=0.1)
@@ -37,8 +36,8 @@ opt = optimizers[args.optimizer](args.learning_rate)
 
 # Get data
 assert args.dataset in data.__all__, f"Dataset {args.dataset} not defined. Please specify one of: {data.__all__}"
-train, val, test, trsteps, valsteps, testeps, classes = getattr(data, args.dataset)(args.path, args.batch)
-print("Dataset {} loaded from {}".format(args.dataset, args.path))
+train, val, test, trsteps, valsteps, testeps, classes = getattr(data, args.dataset)(args.batch)
+print("Dataset {} loaded".format(args.dataset))
 
 # Run name
 run_name = f"{args.network}{args.filters}x{args.nblocks}"

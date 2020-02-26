@@ -17,9 +17,9 @@ class Network(object):
     def __call__(self):
         # Return a keras model on call
 
-        # preact, block has to be set by subclass
         inputs = x = Input(shape=(None, None, 3))
 
+        # preact has to be set by subclass
         if self.preact:
             x = Conv2D(self.filters[0], 5, 2, "same", kernel_regularizer=l2(self.reg))(x)
         else:
