@@ -2,6 +2,7 @@ import argparse
 import data
 import network
 from schedule import lr_schedule
+import tensorflow as tf
 from tensorflow import keras
 from os.path import join
 
@@ -10,16 +11,32 @@ assert __name__ == "__main__", "Not intended to be imported. Please run as scrip
 argp = argparse.ArgumentParser()
 argp.add_argument("network", type=str)
 argp.add_argument("-f", "--filters", nargs="+",
-                  type=int, default=[32, 64, 128])
+                  type=int, default=[8, 16, 32])
 argp.add_argument("-n", "--nblocks", type=int, default=2)
-argp.add_argument("-e", "--epochs", type=int, default=500)
+argp.add_argument("-e", "--epochs", type=int, default=300)
 argp.add_argument("-d", "--dataset", default="cifar10")
-argp.add_argument("-b", "--batch", type=int, default=1024)
+argp.add_argument("-b", "--batch", type=int, default=64)
 argp.add_argument("-o", "--optimizer", type=str, default="sgd")
-argp.add_argument("-lr", "--learning_rate", type=float, default=0.1)
+argp.add_argument("-lr", "--learning_rate", type=float, default=0.01)
 argp.add_argument("-r", "--regularization", type=float, default=0.0001)
+argp.add_argument("--tpu_name", type=str, default="None")
+argp.add_argument("--tpu_zone", type=str, default="None")
 
 args = argp.parse_args()
+
+if args.tpu_name != "None":
+    print("TPU Configured, using TPUStrategy")
+    tpu_cluster = tf.distribute.cluster_resolver.TPUClusterResolver(
+        args.tpu_name, args.tpu_zone)
+    tf.config.experimental_connect_to_cluster(tpu_cluster)
+    tf.tpu.experimental.initialize_tpu_system(tpu_cluster)
+    strategy = tf.distribute.experimental.TPUStrategy(tpu_cluster)
+elif len(tf.config.experimental.list_physical_devices("GPU")) > 1:
+    # Multiple GPU's in single worker
+    print("Multi GPU system found, using MirroredStrategy")
+    num_gpus = len(tf.config.experimental.list_physical_devices("GPU"))
+    args.batch_size = num_gpus * args.batch
+    strategy = tf.distribute.MirroredStrategy()
 
 
 # Get network definition
@@ -36,7 +53,8 @@ opt = optimizers[args.optimizer](args.learning_rate)
 
 # Get data
 assert args.dataset in data.__all__, f"Dataset {args.dataset} not defined. Please specify one of: {data.__all__}"
-train, val, test, trsteps, valsteps, testeps, classes = getattr(data, args.dataset)(args.batch)
+train, val, test, trsteps, valsteps, testeps, classes = getattr(
+    data, args.dataset)(args.batch)
 print("Dataset {} loaded".format(args.dataset))
 
 # Run name
@@ -44,14 +62,14 @@ run_name = f"{args.network}{args.filters}x{args.nblocks}"
 print("Run Name:", run_name)
 
 # Build model
-model = net(args.filters, args.nblocks, classes, reg=args.regularization)()
+with strategy.scope():
+    model = net(args.filters, args.nblocks, classes, reg=args.regularization)()
+
+    model.compile(opt, "sparse_categorical_crossentropy", metrics=[
+        keras.metrics.SparseCategoricalAccuracy("acc")
+    ])
+
 model.summary()
-
-# Compile model
-model.compile(opt, "sparse_categorical_crossentropy", metrics=[
-    keras.metrics.SparseCategoricalAccuracy("acc")
-])
-
 
 # Train the model
 try:

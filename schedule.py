@@ -1,13 +1,11 @@
-import tensorflow as tf
 import math
 
 
 def step_lr_schedule(epoch, lr):
     schedule = {
-        200: 0.1,
-        400: 0.05,
-        450: 0.01,
-        500: 0.001
+        200: 0.01,
+        250: 0.001,
+        300: 0.0001,
     }
     for se, slr in schedule.items():
         if epoch < se:
@@ -29,7 +27,7 @@ def cos_lr_schedule(epoch, lr):
 
 
 def lr_schedule(epoch, lr):
-    return cos_lr_schedule(epoch, lr)
+    return step_lr_schedule(epoch, lr)
 
 
 if __name__ == "__main__":

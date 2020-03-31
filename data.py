@@ -35,9 +35,9 @@ def cifar10(bsize):
         return x, y
 
     # Apply operations
-    train = train.map(augment).shuffle(trsteps, reshuffle_each_iteration=True).batch(
-        bsize).repeat().prefetch(tf.data.experimental.AUTOTUNE)
-    val = val.batch(bsize).repeat().prefetch(tf.data.experimental.AUTOTUNE)
+    train = train.shuffle(trsteps, reshuffle_each_iteration=True).batch(bsize).map(
+        augment, num_parallel_calls=tf.data.experimental.AUTOTUNE).repeat().prefetch(tf.data.experimental.AUTOTUNE).cache()
+    val = val.batch(bsize).repeat().prefetch(tf.data.experimental.AUTOTUNE).cache()
     test = test.batch(bsize).repeat().prefetch(tf.data.experimental.AUTOTUNE)
 
     # Epoch steps
