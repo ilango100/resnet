@@ -24,6 +24,8 @@ argp.add_argument("--tpu_zone", type=str, default="None")
 
 args = argp.parse_args()
 
+strategy = tf.distribute.get_strategy()
+
 if args.tpu_name != "None":
     print("TPU Configured, using TPUStrategy")
     tpu_cluster = tf.distribute.cluster_resolver.TPUClusterResolver(

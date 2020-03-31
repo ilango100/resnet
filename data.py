@@ -29,15 +29,16 @@ def cifar10(bsize):
         train, val, tfds.Split.TEST]]
 
     def augment(x, y):
-        x = tf.pad(x, [[4, 4], [4, 4], [0, 0]])
-        x = tf.image.random_crop(x, [32, 32, 3])
+        x = tf.pad(x, [[0, 0], [4, 4], [4, 4], [0, 0]])
+        x = tf.image.random_crop(x, [bsize, 32, 32, 3])
         x = tf.image.random_flip_left_right(x)
         return x, y
 
     # Apply operations
     train = train.shuffle(trsteps, reshuffle_each_iteration=True).batch(bsize).map(
-        augment, num_parallel_calls=tf.data.experimental.AUTOTUNE).repeat().prefetch(tf.data.experimental.AUTOTUNE).cache()
-    val = val.batch(bsize).repeat().prefetch(tf.data.experimental.AUTOTUNE).cache()
+        augment, num_parallel_calls=tf.data.experimental.AUTOTUNE).cache().prefetch(tf.data.experimental.AUTOTUNE).repeat()
+    val = val.batch(bsize).cache().prefetch(
+        tf.data.experimental.AUTOTUNE).repeat()
     test = test.batch(bsize).repeat().prefetch(tf.data.experimental.AUTOTUNE)
 
     # Epoch steps
