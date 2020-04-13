@@ -32,12 +32,13 @@ def cifar10(bsize):
         x = tf.pad(x, [[0, 0], [4, 4], [4, 4], [0, 0]])
         x = tf.image.random_crop(x, [bsize, 32, 32, 3])
         x = tf.image.random_flip_left_right(x)
+        x = tf.cast(x, tf.float32)
         return x, y
 
     # Apply operations
     train = train.shuffle(trsteps, reshuffle_each_iteration=True).batch(bsize).map(
-        augment, num_parallel_calls=tf.data.experimental.AUTOTUNE).cache().prefetch(tf.data.experimental.AUTOTUNE).repeat()
-    val = val.batch(bsize).cache().prefetch(
+        augment, num_parallel_calls=tf.data.experimental.AUTOTUNE).prefetch(tf.data.experimental.AUTOTUNE).repeat()
+    val = val.batch(bsize).prefetch(
         tf.data.experimental.AUTOTUNE).repeat()
     test = test.batch(bsize).repeat().prefetch(tf.data.experimental.AUTOTUNE)
 
