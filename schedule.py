@@ -10,16 +10,14 @@ def step_lr_schedule(epoch, lr):
     for se, slr in schedule.items():
         if epoch < se:
             return slr
-    if epoch % 200 == 0:
-        return lr/3
-    return lr
+    return 0.0001
 
 
 def cos_lr_schedule(epoch, lr):
     # Half cosine
     cycles = 490
-    max_lr = 0.1
-    min_lr = 0.001
+    max_lr = 0.01
+    min_lr = 0.0005
     if epoch <= cycles:
         cosval = (math.cos((math.pi*epoch)/cycles) + 1)/2
         return cosval * (max_lr-min_lr) + min_lr
@@ -41,3 +39,4 @@ if __name__ == "__main__":
     plt.plot(lrs)
     # plt.yscale("log")
     plt.show()
+

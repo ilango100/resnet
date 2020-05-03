@@ -137,7 +137,8 @@ dmypy.json
 
 # Tensorboard
 logs
-*logs
+*logs*
 
 # Models
 models
+

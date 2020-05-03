@@ -11,6 +11,10 @@ def split_trainval(dataset, l, frac=0.8):
     return train, val, trsteps
 
 
+def std(x, y):
+    return x/255, y
+
+
 def cifar10(bsize):
     # Download and prepare dataset
     cifar = tfds.builder("cifar10")
@@ -24,23 +28,30 @@ def cifar10(bsize):
 
     # Get data
     # train, val = tfds.Split.TRAIN.subsplit(weighted=[4, 1])
-    train, val = "train[:80%]", "train[80%:]"
-    train, val, test = [cifar.as_dataset(split=x, as_supervised=True) for x in [
-        train, val, tfds.Split.TEST]]
+    splits = ("train[:80%]", "train[80%:]", "test")
+    train, val, test = [cifar.as_dataset(split=x,
+                                         shuffle_files=True,
+                                         batch_size=bsize,
+                                         as_supervised=True)
+                        for x in splits]
 
     def augment(x, y):
         x = tf.pad(x, [[0, 0], [4, 4], [4, 4], [0, 0]])
         x = tf.image.random_crop(x, [bsize, 32, 32, 3])
         x = tf.image.random_flip_left_right(x)
-        x = tf.cast(x, tf.float32)
         return x, y
 
     # Apply operations
-    train = train.shuffle(trsteps, reshuffle_each_iteration=True).batch(bsize).map(
-        augment, num_parallel_calls=tf.data.experimental.AUTOTUNE).prefetch(tf.data.experimental.AUTOTUNE).repeat()
-    val = val.batch(bsize).prefetch(
-        tf.data.experimental.AUTOTUNE).repeat()
-    test = test.batch(bsize).repeat().prefetch(tf.data.experimental.AUTOTUNE)
+    train = train \
+        .map(augment, num_parallel_calls=tf.data.experimental.AUTOTUNE) \
+        .map(std, num_parallel_calls=tf.data.experimental.AUTOTUNE) \
+        .prefetch(tf.data.experimental.AUTOTUNE).repeat()
+    val = val \
+        .map(std, num_parallel_calls=tf.data.experimental.AUTOTUNE) \
+        .prefetch(tf.data.experimental.AUTOTUNE).repeat()
+    test = test \
+        .map(std, num_parallel_calls=tf.data.experimental.AUTOTUNE) \
+        .prefetch(tf.data.experimental.AUTOTUNE).repeat()
 
     # Epoch steps
     trsteps = math.ceil(trsteps/bsize)
@@ -60,8 +71,11 @@ def cats_vs_dogs(bsize):
     testeps = totsteps - trsteps - valsteps
 
     train, val, test = "train[:70%]", "train[70%:85%]", "train[85%:]"
-    train, val, test = [cvd.as_dataset(split=x, batch_size=bsize,
-                                       shuffle_files=True, as_supervised=True) for x in [train, val, test]]
+    train, val, test = [cvd.as_dataset(split=x,
+                                       shuffle_files=True,
+                                       batch_size=bsize,
+                                       as_supervised=True)
+                        for x in [train, val, test]]
 
     # Per epoch steps
     trsteps = math.ceil(trsteps/bsize)
@@ -81,8 +95,24 @@ def imagenette(bsize):
     testeps = imt.info.splits[tfds.Split.VALIDATION].num_examples
 
     train, val, test = "train[:80%]", "train[80%:]", "validation"
-    train, val, test = [imt.as_dataset(split=x, batch_size=bsize,
-                                       shuffle_files=True, as_supervised=True) for x in [train, val, test]]
+    train, val, test = [imt.as_dataset(split=x,
+                                       shuffle_files=True,
+                                       batch_size=bsize,
+                                       as_supervised=True)
+                        for x in [train, val, test]]
+
+    def augment(x, y):
+        x = tf.pad(x, [[0, 0], [20, 20], [20, 20], [0, 0]])
+        x = tf.image.random_crop(x, (160, 160))
+        x = tf.image.random_flip_left_right(x)
+        x = tf.image.random_brightness(x, 0.2)
+        return x, y
+
+    train = train \
+        .map(augment, num_parallel_calls=tf.data.experimental.AUTOTUNE) \
+        .map(std, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    val = val.map(std, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    test = test.map(std, num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
     trsteps, valsteps, testeps = [
         math.ceil(x/bsize) for x in [trsteps, valsteps, testeps]]
@@ -90,33 +120,34 @@ def imagenette(bsize):
     return train, val, test, trsteps, valsteps, testeps, 10
 
 
-def tiny_imagenet(bsize):
-    # Download and prepare dataset
-    cifar = tfds.builder("tiny_imagenet")
-    cifar.download_and_prepare()
+# tiny_imagenet not implemented yet
+# def tiny_imagenet(bsize):
+#     # Download and prepare dataset
+#     cifar = tfds.builder("tiny_imagenet")
+#     cifar.download_and_prepare()
 
-    # Get epoch steps
-    totsteps = cifar.info.splits[tfds.Split.TRAIN].num_examples
-    trsteps = math.ceil(totsteps * 0.8)
-    valsteps = totsteps - trsteps
-    testeps = cifar.info.splits[tfds.Split.TEST].num_examples
+#     # Get epoch steps
+#     totsteps = cifar.info.splits[tfds.Split.TRAIN].num_examples
+#     trsteps = math.ceil(totsteps * 0.8)
+#     valsteps = totsteps - trsteps
+#     testeps = cifar.info.splits[tfds.Split.TEST].num_examples
 
-    # Get data
-    train = cifar.as_dataset(split="train[:80%]", as_supervised=True)
-    val = cifar.as_dataset(split="train[80%:]", as_supervised=True)
-    test = cifar.as_dataset(split="validation", as_supervised=True)
+#     # Get data
+#     train = cifar.as_dataset(split="train[:80%]", as_supervised=True)
+#     val = cifar.as_dataset(split="train[80%:]", as_supervised=True)
+#     test = cifar.as_dataset(split="validation", as_supervised=True)
 
-    # Apply operations
-    train = train.repeat().batch(bsize).prefetch(tf.data.experimental.AUTOTUNE)
-    val = val.repeat().batch(bsize).prefetch(tf.data.experimental.AUTOTUNE)
-    test = test.repeat().batch(bsize).prefetch(tf.data.experimental.AUTOTUNE)
+#     # Apply operations
+#     train = train.repeat().batch(bsize).prefetch(tf.data.experimental.AUTOTUNE)
+#     val = val.repeat().batch(bsize).prefetch(tf.data.experimental.AUTOTUNE)
+#     test = test.repeat().batch(bsize).prefetch(tf.data.experimental.AUTOTUNE)
 
-    # Epoch steps
-    trsteps = math.ceil(trsteps/bsize)
-    valsteps = math.ceil(valsteps/bsize)
-    testeps = math.ceil(testeps/bsize)
+#     # Epoch steps
+#     trsteps = math.ceil(trsteps/bsize)
+#     valsteps = math.ceil(valsteps/bsize)
+#     testeps = math.ceil(testeps/bsize)
 
-    return train, val, test, trsteps, valsteps, testeps, 200
+#     return train, val, test, trsteps, valsteps, testeps, 200
 
 
-__all__ = ["cifar10", "cats_vs_dogs", "imagenette", "tiny_imagenet"]
+__all__ = ["cifar10", "cats_vs_dogs", "imagenette"]
