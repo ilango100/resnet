@@ -79,8 +79,7 @@ try:
         keras.callbacks.TerminateOnNaN(),
         keras.callbacks.LearningRateScheduler(lr_schedule),
         # keras.callbacks.ReduceLROnPlateau(patience=10, verbose=1, cooldown=2, min_lr=1e-7)
-        keras.callbacks.TensorBoard(join("logs", args.dataset, run_name),
-                                    profile_batch=0)  # To avoid the bug: https://github.com/tensorflow/tensorboard/issues/2084
+        keras.callbacks.TensorBoard(join("logs", args.dataset, run_name))
     ], validation_data=val, validation_steps=valsteps)
 except KeyboardInterrupt:
     print("\n\nTraining stopped, Evaluating Model...")
