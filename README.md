@@ -21,7 +21,7 @@ to see all the options.
 
 ## Results on CIFAR 10
 
-The results obtained on CIFAR 10 dataset are on this [tensorboard log](https://tensorboard.dev/experiment/E43C9n5ETPeRQWHjOea3AQ). To replicate the experiment, run in shell:
+The results obtained on CIFAR 10 dataset are on this [tensorboard log](https://tensorboard.dev/experiment/n2VONYJsRRC1nGLI18aLag). To replicate the experiment, run in shell:
 ```
 for net in PlainNet ResNet ResNetV2; do
 	for size in 2 4 6; do
