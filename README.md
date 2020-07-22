@@ -7,7 +7,13 @@ This repository contains tensorflow implementation of Residual Neural Network. F
 
 ## Usage
 
-To run the training on a dataset with a particular architecture, run
+To run sample training on sin function dataset, run
+```
+$ python sin_function.py
+```
+This generates the comparison graphs between PlainNet and ResNet.
+
+To run the training on CIFAR-10 with a particular architecture, run
 ```
 $ python train.py <Network> -n <nblocks>
 ```
